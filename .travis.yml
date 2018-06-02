@@ -2,4 +2,4 @@
   python:
     - "3.6"
   script:
-    - echo "hello"
+    - make lint
