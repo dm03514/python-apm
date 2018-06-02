@@ -15,10 +15,10 @@ class PythonAPM:
     """
     Instruments flask applications, exposes a number of configurable metrics.
     """
-    def __init__(self, app, surfacers=(LogSurfacer(),)):
+    def __init__(self, app, surfacer_list=(LogSurfacer(),)):
         self.app = app
 
-        surfacers = self.init_surfacers(surfacers)
+        surfacers = Surfacers(surfacer_list)
 
         self.request_time = Histogram(
             'pythonapm.request_time_ms', surfacers=surfacers,
@@ -28,9 +28,6 @@ class PythonAPM:
             'request_start_time': None,
         }
         self.init_apm(app)
-
-    def init_surfacers(self, surfacers):
-        return Surfacers(surfacers)
 
     def init_apm(self, app):
         self.register_signals(app)
