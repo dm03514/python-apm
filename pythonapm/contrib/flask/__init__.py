@@ -1,5 +1,6 @@
 import logging
 import threading
+import uuid
 
 from datetime import datetime
 from flask import signals
@@ -31,12 +32,17 @@ class PythonAPM:
 
     def init_apm(self, app):
         self.register_signals(app)
+        app.after_request(self.decorate_response)
 
     def register_signals(self, app):
         signals.got_request_exception.connect(
             self.handle_exception, sender=app, weak=False)
         signals.request_started.connect(self.request_started, sender=app)
         signals.request_finished.connect(self.request_finished, sender=app)
+
+    def decorate_response(self, response):
+        response.headers['dm03514/pythonapm'] = uuid.uuid4()
+        return response
 
     def handle_exception(self, *args, **kwargs):
         pass
