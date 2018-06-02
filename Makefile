@@ -8,4 +8,7 @@ start-simple-test-server:
 test-simple-test-server:
 	curl http://127.0.0.1:5000/
 
-.PHONY: start-simple-test-server test-simple-test-server lint
+test-unit:
+	nosetests tests
+
+.PHONY: start-simple-test-server test-simple-test-server lint test-unit
