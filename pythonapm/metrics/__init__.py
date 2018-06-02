@@ -1,12 +1,12 @@
 import json
 
 from datetime import datetime
-from enum import IntEnum
+from enum import Enum
 
 
-class METRIC_TYPE(IntEnum):
-    GAUGE = 0
-    HISTOGRAM = 1
+class METRIC_TYPE(Enum):
+    GAUGE = 'gauge'
+    HISTOGRAM = 'histogram'
 
 
 class Metric:
@@ -19,7 +19,7 @@ class Metric:
     def dict(self):
         return {
             'name': self.name,
-            'type': self.mtype,
+            'type': self.mtype.value,
             'value': self.value,
             'timestamp': self.timestamp,
         }
