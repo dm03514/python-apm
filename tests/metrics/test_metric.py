@@ -15,7 +15,7 @@ class MetricTestCase(unittest.TestCase):
             ).dict(),
             {
                 'name': 'test.metric',
-                'type': 0,
+                'type': 'gauge',
                 'value': 10,
                 'timestamp': '2017-01-01 00:00:00',
             }
