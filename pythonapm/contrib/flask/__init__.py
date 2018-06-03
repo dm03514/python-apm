@@ -19,12 +19,12 @@ class PythonAPM:
     def __init__(self, app, surfacer_list=(LogSurfacer(),)):
         self.app = app
 
-        surfacers = Surfacers(surfacer_list)
+        self.surfacers = Surfacers(surfacer_list)
 
-        monkey.patch_all(surfacers)
+        monkey.patch_all(self.surfacers)
 
         self.request_time = Histogram(
-            'pythonapm.http.request.time_ms', surfacers=surfacers,
+            'pythonapm.http.request.time_ms', surfacers=self.surfacers,
         )
 
         self.request_data = {
@@ -47,7 +47,7 @@ class PythonAPM:
         return response
 
     def handle_exception(self, *args, **kwargs):
-        pass
+        self.surfacers.flush()
 
     def request_started(self, *args, **kwargs):
         logger.debug('request_started')
@@ -56,6 +56,7 @@ class PythonAPM:
     def request_finished(self, *args, **kwargs):
         logger.debug('request_finished')
         self.observe_request_time()
+        self.surfacers.flush()
 
     def observe_request_time(self):
         diff = datetime.utcnow() - self.request_data['request_start_time']

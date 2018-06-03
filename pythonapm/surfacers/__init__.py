@@ -7,6 +7,10 @@ class Surfacer(ABC):
     def record(self, metric):
         pass
 
+    @abstractmethod
+    def flush(self, metric):
+        pass
+
 
 class Surfacers:
     """
@@ -19,3 +23,7 @@ class Surfacers:
     def record(self, metric):
         for s in self.surfacers:
             s.record(metric)
+
+    def flush(self):
+        for s in self.surfacers:
+            s.flush()
