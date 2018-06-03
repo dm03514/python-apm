@@ -1,10 +1,10 @@
 import logging
-import threading
 import uuid
 
 from datetime import datetime
 from flask import signals
 
+from pythonapm.instruments import monkey
 from pythonapm.metrics.histogram import Histogram
 from pythonapm.surfacers import Surfacers
 from pythonapm.surfacers.logging import LogSurfacer
@@ -21,8 +21,10 @@ class PythonAPM:
 
         surfacers = Surfacers(surfacer_list)
 
+        monkey.patch_all(surfacers)
+
         self.request_time = Histogram(
-            'pythonapm.request_time_ms', surfacers=surfacers,
+            'pythonapm.http.request.time_ms', surfacers=surfacers,
         )
 
         self.request_data = {
@@ -48,8 +50,8 @@ class PythonAPM:
         pass
 
     def request_started(self, *args, **kwargs):
-        self.request_data['request_start_time'] = datetime.utcnow()
         logger.debug('request_started')
+        self.request_data['request_start_time'] = datetime.utcnow()
 
     def request_finished(self, *args, **kwargs):
         logger.debug('request_finished')
