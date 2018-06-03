@@ -19,6 +19,3 @@ class Counter:
             value=self.count,
         )
         self.surfacers.record(m)
-
-    def __repr__(self):
-        return self.__class__.__name__ + str.__repr__(self)

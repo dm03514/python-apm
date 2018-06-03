@@ -12,3 +12,6 @@ class StrAllocator(str):
     @property
     def __class__(self):
         return str
+
+    def __repr__(self):
+        return self.__class__.__name__ + str.__repr__(self)
