@@ -1,5 +1,3 @@
-import json
-
 from datetime import datetime
 from enum import Enum
 
@@ -7,6 +5,7 @@ from enum import Enum
 class METRIC_TYPE(Enum):
     GAUGE = 'gauge'
     HISTOGRAM = 'histogram'
+    COUNTER = 'counter'
 
 
 class Metric:
