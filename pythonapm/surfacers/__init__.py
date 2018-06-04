@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class Surfacer(ABC):
 
     @abstractmethod
-    def clear(self, metric):
+    def clear(self):
         """
         Provides lifecycle control over a surfacer.  Useful when a caller
         would like to track how many metrics were surfaced between two
@@ -20,7 +20,7 @@ class Surfacer(ABC):
         pass
 
     @abstractmethod
-    def flush(self, metric):
+    def flush(self):
         pass
 
 

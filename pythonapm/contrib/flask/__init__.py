@@ -24,7 +24,8 @@ class PythonAPM:
         monkey.patch_all(self.surfacers)
 
         self.request_time = Histogram(
-            'pythonapm.http.request.time_ms', surfacers=self.surfacers,
+            'pythonapm.http.request.time_microseconds',
+            surfacers=self.surfacers,
         )
 
         self.request_data = {
