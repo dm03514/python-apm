@@ -51,6 +51,7 @@ class PythonAPM:
 
     def request_started(self, *args, **kwargs):
         logger.debug('request_started')
+        self.surfacers.clear()
         self.request_data['request_start_time'] = datetime.utcnow()
 
     def request_finished(self, *args, **kwargs):
