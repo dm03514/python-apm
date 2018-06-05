@@ -1,9 +1,13 @@
 import logging
 import uuid
+import psutil
 
 from datetime import datetime
+
+import os
 from flask import signals
 
+from pythonapm.metrics.gauge import Gauge
 from pythonapm.metrics.histogram import Histogram
 from pythonapm.surfacers import Surfacers
 from pythonapm.surfacers.logging import LogSurfacer
@@ -25,8 +29,14 @@ class PythonAPM:
             surfacers=self.surfacers,
         )
 
+        self.rss_diff = Gauge(
+            'pythonapm.http.request.rss.diff.bytes',
+            surfacers=self.surfacers,
+        )
+
         self.request_data = {
             'request_start_time': None,
+            'request_start_rss': None,
         }
         self.init_apm(app)
 
@@ -51,12 +61,20 @@ class PythonAPM:
         logger.debug('request_started')
         self.surfacers.clear()
         self.request_data['request_start_time'] = datetime.utcnow()
+        self.request_data['request_start_rss'] = \
+            psutil.Process(os.getpid()).memory_info().rss
 
     def request_finished(self, *args, **kwargs):
         logger.debug('request_finished')
         self.observe_request_time()
+        self.set_request_rss_diff()
         self.surfacers.flush()
 
     def observe_request_time(self):
         diff = datetime.utcnow() - self.request_data['request_start_time']
         self.request_time.observe(diff.microseconds)
+
+    def set_request_rss_diff(self):
+        diff = psutil.Process(os.getpid()).memory_info().rss \
+               - self.request_data['request_start_rss']
+        self.rss_diff.set(diff)

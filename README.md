@@ -255,4 +255,67 @@ $ make test-simple-test-server
 
 ## Creating and integrating a new metric into Flask
 
-This tutorial will display how to create a new metric and hook it into the flask APM.
+This tutorial will display how to create a new metric and hook it into the flask APM.  For this
+tutorial we will track how much RSS memory a request takes.  In order to do this we'll need
+to hook into Flask Request/Response cycle. We'll record the memory usage at the beginning of the
+request and then record and diff it at the end. The RSS Memory will lend well to a `Gauge` metric.
+This will only tell the diff between the end request memory in use, NOT all allocations. 
+
+- Add the gauge to `flask`.  This gauge will be instantiated when the APM is created.
+
+```
+# __init__
+
+self.rss_diff = Gauge(
+   'pythonapm.http.request.rss.diff.bytes',
+    surfacers=self.surfacers,
+)
+```
+Each metric requires a unique name, and a reference to surfacers.  The surfacers will observe all
+operations emitted by the metric.
+
+- Add an entry to `request_data` dictionary to track the initial memory observed when the request
+begins
+
+```
+self.request_data = {
+    ...
+    'request_start_rss': None,
+}
+```
+
+- Record the initial starting rss
+
+```
+def request_started(...):
+    self.request_data['request_start_rss'] = \
+    psutil.Process(os.getpid()).memory_info().rss
+```
+
+- Add the recording of the rss diff to the request_finished hook
+```
+def request_finished(self, *args, **kwargs):
+    ...
+    self.set_request_rss_diff()
+    self.surfacers.flush()
+```
+
+- Add support for calculating the response rss value and recording the diff
+
+```
+def set_request_rss_diff(self):
+    diff = psutil.Process(os.getpid()).memory_info().rss \
+           - self.request_data['request_start_rss']
+    self.rss_diff.set(diff)
+```
+
+- Firing up the server and running the simple curl test should now show our new metric in the 
+logs!
+
+```
+$ make start-simple-test-server
+$ make test-simple-test-server
+
+2018-06-05 13:05:54,847 - pythonapm.surfacers.logging - DEBUG - {'value': 0, 'type': 'gauge', 'timestamp': '2018-06-05 13:05:54.847537', 'name': 'pythonapm.http.request.rss.diff.bytes'}
+2018-06-05 13:05:54,848 - pythonapm.surfacers.http - DEBUG - flushing metrics: {"pythonapm.http.request.time_microseconds": [{"value": 1066, "type": "histogram", "timestamp": "2018-06-05 13:05:54.846706", "name": "pythonapm.http.request.time_microseconds"}], "pythonapm.http.request.rss.diff.bytes": [{"value": 0, "type": "gauge", "timestamp": "2018-06-05 13:05:54.847537", "name": "pythonapm.http.request.rss.diff.bytes"}]}
+```
