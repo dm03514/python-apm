@@ -189,7 +189,70 @@ which we'll submit all metrics to the http resource specified.  If an error occu
 ```
 def flush(self):
     logger.debug('flushing metrics: {}'.format(json.dumps(self.metrics)))
-    response = self.post_fn(self.http_url, json=dict(self.metrics))
-    if not response.ok:
-        logger.error('error submitting metrics: {}'.format(response))
+    try:
+        response = self.post_fn(self.http_url, json=dict(self.metrics))
+    except requests.exceptions.ConnectionError as e:
+        logger.error('error submitting metrics: {}'.format(e))
+    else:
+        if not response.ok:
+            logger.error('error submitting metrics: {}'.format(response))
 ```
+
+All we should have left now is to configure our new surfacer for use with our APM.  By Default the APM
+uses the `LogSurfacer` which will log all metrics through pythons built-in logger.  In addition, we'll
+configure and inject our new surfacer for use.
+
+- Add the new surfacer to the flask app
+
+```
+http_surfacer = RequestScopedHTTPSurfacer(
+    http_port=':9000',
+)
+```
+
+- Configure the Flask APM with the http_surfacer
+
+```
+apm = PythonAPM(
+    app,
+    surfacer_list=(LogSurfacer(), http_surfacer)
+)
+```
+
+- Now if we run our application and make a request we should see the surfacer referenced and the 
+http request that it submits should be failing
+
+```
+$ make start-simple-test-server
+FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
+ * Serving Flask app "tests/contrib/flask/fixtures/single_route_apm_app/app.py"
+ * Environment: production
+   WARNING: Do not use the development server in a production environment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+2018-06-05 12:05:19,466 - pythonapm.surfacers.logging - DEBUG - {'name': 'pythonapm.instruments.imports.count', 'timestamp': '2018-06-05 12:05:19.466692', 'value': 1, 'type': 'counter'}
+...
+2018-06-05 12:05:19,511 - pythonapm.surfacers.logging - DEBUG - {'name': 'pythonapm.instruments.imports.count', 'timestamp': '2018-06-05 12:05:19.511347', 'value': 69, 'type': 'counter'}
+2018-06-05 12:05:19,511 - werkzeug - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+```
+
+```
+$ make test-simple-test-server
+```
+
+```
+2018-06-05 12:18:19,097 - pythonapm.contrib.flask - DEBUG - request_started
+2018-06-05 12:18:19,097 - pythonapm.surfacers.http - DEBUG - initializing surfacer
+2018-06-05 12:18:19,098 - pythonapm.contrib.flask - DEBUG - request_finished
+2018-06-05 12:18:19,099 - pythonapm.surfacers.logging - DEBUG - {'value': 911, 'type': 'histogram', 'timestamp': '2018-06-05 12:18:19.099610', 'name': 'pythonapm.http.request.time_microseconds'}
+2018-06-05 12:18:19,100 - pythonapm.surfacers.http - DEBUG - flushing metrics: {"pythonapm.http.request.time_microseconds": [{"value": 911, "type": "histogram", "timestamp": "2018-06-05 12:18:19.099610", "name": "pythonapm.http.request.time_microseconds"}]}
+2018-06-05 12:18:19,101 - pythonapm.surfacers.logging - DEBUG - {'value': 80, 'type': 'counter', 'timestamp': '2018-06-05 12:18:19.101499', 'name': 'pythonapm.instruments.imports.count'}
+2018-06-05 12:18:19,103 - urllib3.connectionpool - DEBUG - Starting new HTTP connection (1): localhost
+2018-06-05 12:18:19,104 - pythonapm.surfacers.http - ERROR - error submitting metrics: HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fc432ab2978>: Failed to establish a new connection: [Errno 111] Connection refused',))
+2018-06-05 12:18:19,105 - werkzeug - INFO - 127.0.0.1 - - [05/Jun/2018 12:18:19] "GET / HTTP/1.1" 200 -
+```
+
+
+## Creating and integrating a new metric into Flask
+
+This tutorial will display how to create a new metric and hook it into the flask APM.

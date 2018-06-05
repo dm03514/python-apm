@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 
 import requests
+from requests.exceptions import ConnectionError
 
 from pythonapm.metrics import METRIC_TYPE
 from . import Surfacer
@@ -33,9 +34,13 @@ class RequestScopedHTTPSurfacer(Surfacer):
 
     def flush(self):
         logger.debug('flushing metrics: {}'.format(json.dumps(self.metrics)))
-        response = self.post_fn(self.http_url, json=dict(self.metrics))
-        if not response.ok:
-            logger.error('error submitting metrics: {}'.format(response))
+        try:
+            response = self.post_fn(self.http_url, json=dict(self.metrics))
+        except ConnectionError as e:
+            logger.error('error submitting metrics: {}'.format(e))
+        else:
+            if not response.ok:
+                logger.error('error submitting metrics: {}'.format(response))
 
     def record(self, metric):
         """

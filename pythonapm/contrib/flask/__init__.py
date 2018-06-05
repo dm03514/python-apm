@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 from flask import signals
 
-from pythonapm.instruments import monkey
 from pythonapm.metrics.histogram import Histogram
 from pythonapm.surfacers import Surfacers
 from pythonapm.surfacers.logging import LogSurfacer
@@ -20,8 +19,6 @@ class PythonAPM:
         self.app = app
 
         self.surfacers = Surfacers(surfacer_list)
-
-        monkey.patch_all(self.surfacers)
 
         self.request_time = Histogram(
             'pythonapm.http.request.time_microseconds',

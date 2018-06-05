@@ -20,5 +20,5 @@ class Metric:
             'name': self.name,
             'type': self.mtype.value,
             'value': self.value,
-            'timestamp': self.timestamp,
+            'timestamp': str(self.timestamp),
         }
