@@ -33,9 +33,10 @@ class RequestScopedHTTPSurfacer(Surfacer):
         self.metrics = defaultdict(list)
 
     def flush(self):
-        logger.debug('flushing metrics: {}'.format(json.dumps(self.metrics)))
+        to_flush = {'metrics': dict(self.metrics)}
+        logger.debug('flushing metrics: {}'.format(json.dumps(to_flush)))
         try:
-            response = self.post_fn(self.http_url, json=dict(self.metrics))
+            response = self.post_fn(self.http_url, json=to_flush)
         except ConnectionError as e:
             logger.error('error submitting metrics: {}'.format(e))
         else:
