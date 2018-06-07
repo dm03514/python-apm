@@ -65,20 +65,22 @@ class RequestScopedHTTPSurfacerTestCase(unittest.TestCase):
 
         surfacer.flush()
         post_fn.assert_called_once_with('http://localhost/', json={
-            'test.metric.gauge': [
-                {
-                    'type': 'gauge',
-                    'timestamp': '2017-01-01 00:00:00',
-                    'value': 1,
-                    'name': 'test.metric.gauge'
-                }
-            ],
-            'test.metric': [
-                {
-                    'type': 'counter',
-                    'timestamp': '2017-01-01 00:00:00',
-                    'value': 1,
-                    'name': 'test.metric'
-                }
-            ]
+            'metrics': {
+                'test.metric.gauge': [
+                    {
+                        'type': 'gauge',
+                        'timestamp': '2017-01-01 00:00:00',
+                        'value': 1,
+                        'name': 'test.metric.gauge'
+                    }
+                ],
+                'test.metric': [
+                    {
+                        'type': 'counter',
+                        'timestamp': '2017-01-01 00:00:00',
+                        'value': 1,
+                        'name': 'test.metric'
+                    }
+                ]
+            }
         })

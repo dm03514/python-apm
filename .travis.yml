@@ -4,3 +4,5 @@
   script:
     - make lint
     - make test-unit
+    - make start-service-test-stack
+    - make test-service
