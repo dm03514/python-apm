@@ -77,11 +77,7 @@ from pythonapm.contrib.flask import PythonAPM
 app = Flask(__name__)
 apm = PythonAPM(app)
 ```
-
-- Configure an HTTPRequestScoped Surfacer
-
-```
-```
+- Please see the tutorials below for examples on how to configure APMs
 
 
 ## Supported Metrics
