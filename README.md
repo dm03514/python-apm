@@ -1,4 +1,7 @@
 # python-apm
+
+[![Build Status](https://travis-ci.org/dm03514/python-apm.svg?branch=master)](https://travis-ci.org/dm03514/python-apm)
+
 Light-weight Python APM to add Custom Runtime Instrumentation  
 
 [Design Docs](https://docs.google.com/document/d/13t3OhHZidfE1O0hkLGldknzEhTNcPK0t3Ecc3PdNGTk/edit?usp=sharing)
@@ -13,8 +16,8 @@ Light-weight Python APM to add Custom Runtime Instrumentation
 
 - Start the dev server
 
-```
-$ make start-simple-test-server                                                                [152/9591]FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
+```bash
+$ make start-simple-test-server 
  * Serving Flask app "tests/contrib/flask/fixtures/single_route_apm_app/app.py"
  * Environment: production
    WARNING: Do not use the development server in a production environment.
@@ -30,7 +33,7 @@ value': 1, 'type': 'counter'}
 
 - Send a Request
 
-```
+```bash
 $ make test-simple-test-server
 curl -v http://127.0.0.1:5000/
 *   Trying 127.0.0.1...
@@ -54,7 +57,7 @@ Hello, World!
 
 - Verify request Latency in Flask Logs
 
-```
+```bash
 2018-06-04 13:00:48,920 - pythonapm.contrib.flask - DEBUG - request_started
 2018-06-04 13:00:48,920 - pythonapm.contrib.flask - DEBUG - request_finished
 2018-06-04 13:00:48,921 - pythonapm.surfacers.logging - DEBUG - {'timestamp': datetime.datetime(2018, 6, 4, 13, 0, 48, 921243), 'value': 724, 'name': 'pythonapm.http.request.time_ms', 'type': 'histogram'}
@@ -68,7 +71,7 @@ there was 724 microseconds!
 ## Flask Integration
 - Wrap APP in flask PythonAPM
 
-```
+```python
 from pythonapm.contrib.flask import PythonAPM
 
 app = Flask(__name__)
@@ -117,7 +120,7 @@ Let's get started!
 
 - First we'll create a new surfacer in `pythonapm.surfacers`, and stub out its required methods
 
-```
+```python
 # pythonapm.surfacers.http
 
 from . import Surfacer
@@ -137,7 +140,7 @@ class RequestScopedHTTPSurfacer(Surfacer):
 - Next, we'll add an HTTP interface.  We'll require callers to specific an HTTP addr and path to 
 submit data to.
 
-```
+```python
 ...
 def __init__(self, http_host='localhost', http_port='', http_path='/'):
     self.http_url = self._build_url(http_host, http_port, http_path)
@@ -146,7 +149,7 @@ def __init__(self, http_host='localhost', http_port='', http_path='/'):
 
 - Let's add a variable to track internal state of all metrics we've seen, we'll use a dictionary to keep track of keys.
 
-```
+```python
 def __init__(...):
     self.metrics = defaultdict(list)  
 ```
@@ -156,7 +159,7 @@ counts of metrics per request. Let's make this logic up!  For Counters we'll emi
 with the total value seen during that request.  For other datatypes ie histogram/gauge we'll 
 keep all values seen during the request in the order that we receive them:
 
-```
+```python
 def record(self, metric):
     """
     Records a metric.  If the metric is a count it will take the last count.
@@ -178,7 +181,7 @@ def record(self, metric):
 The Flask APM calls `clear()` at the beginning of each request.  Let's use this to initialize the
 metrics for each request.
 
-```
+```python
 def clear(self):
     self.metrics = defaultdict(list)    
 ```
@@ -186,7 +189,7 @@ def clear(self):
 - Now comes the fun part! At the end of each request flask APM will call the `flush()` method.  During
 which we'll submit all metrics to the http resource specified.  If an error occurs we'll log it.
 
-```
+```python
 def flush(self):
     logger.debug('flushing metrics: {}'.format(json.dumps(self.metrics)))
     try:
@@ -204,7 +207,7 @@ configure and inject our new surfacer for use.
 
 - Add the new surfacer to the flask app
 
-```
+```python
 http_surfacer = RequestScopedHTTPSurfacer(
     http_port=':9000',
 )
@@ -212,7 +215,7 @@ http_surfacer = RequestScopedHTTPSurfacer(
 
 - Configure the Flask APM with the http_surfacer
 
-```
+```python
 apm = PythonAPM(
     app,
     surfacer_list=(LogSurfacer(), http_surfacer)
@@ -222,7 +225,7 @@ apm = PythonAPM(
 - Now if we run our application and make a request we should see the surfacer referenced and the 
 http request that it submits should be failing
 
-```
+```bash
 $ make start-simple-test-server
 FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
  * Serving Flask app "tests/contrib/flask/fixtures/single_route_apm_app/app.py"
@@ -236,11 +239,11 @@ FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
 2018-06-05 12:05:19,511 - werkzeug - INFO -  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-```
+```bash
 $ make test-simple-test-server
 ```
 
-```
+```bash
 2018-06-05 12:18:19,097 - pythonapm.contrib.flask - DEBUG - request_started
 2018-06-05 12:18:19,097 - pythonapm.surfacers.http - DEBUG - initializing surfacer
 2018-06-05 12:18:19,098 - pythonapm.contrib.flask - DEBUG - request_finished
@@ -263,7 +266,7 @@ This will only tell the diff between the end request memory in use, NOT all allo
 
 - Add the gauge to `flask`.  This gauge will be instantiated when the APM is created.
 
-```
+```python
 # __init__
 
 self.rss_diff = Gauge(
@@ -277,7 +280,7 @@ operations emitted by the metric.
 - Add an entry to `request_data` dictionary to track the initial memory observed when the request
 begins
 
-```
+```python
 self.request_data = {
     ...
     'request_start_rss': None,
@@ -286,14 +289,14 @@ self.request_data = {
 
 - Record the initial starting rss
 
-```
+```python
 def request_started(...):
     self.request_data['request_start_rss'] = \
     psutil.Process(os.getpid()).memory_info().rss
 ```
 
 - Add the recording of the rss diff to the request_finished hook
-```
+```python
 def request_finished(self, *args, **kwargs):
     ...
     self.set_request_rss_diff()
@@ -302,7 +305,7 @@ def request_finished(self, *args, **kwargs):
 
 - Add support for calculating the response rss value and recording the diff
 
-```
+```python
 def set_request_rss_diff(self):
     diff = psutil.Process(os.getpid()).memory_info().rss \
            - self.request_data['request_start_rss']
@@ -312,7 +315,7 @@ def set_request_rss_diff(self):
 - Firing up the server and running the simple curl test should now show our new metric in the 
 logs!
 
-```
+```bash
 $ make start-simple-test-server
 $ make test-simple-test-server
 
