@@ -4,11 +4,23 @@ from abc import ABC, abstractmethod
 class Surfacer(ABC):
 
     @abstractmethod
+    def clear(self):
+        """
+        Provides lifecycle control over a surfacer.  Useful when a caller
+        would like to track how many metrics were surfaced between two
+        events, ie `clear` and `flush`.
+
+        :param metric:
+        :return:
+        """
+        pass
+
+    @abstractmethod
     def record(self, metric):
         pass
 
     @abstractmethod
-    def flush(self, metric):
+    def flush(self):
         pass
 
 
@@ -20,10 +32,14 @@ class Surfacers:
     def __init__(self, surfacers=()):
         self.surfacers = surfacers
 
-    def record(self, metric):
+    def clear(self):
         for s in self.surfacers:
-            s.record(metric)
+            s.clear()
 
     def flush(self):
         for s in self.surfacers:
             s.flush()
+
+    def record(self, metric):
+        for s in self.surfacers:
+            s.record(metric)

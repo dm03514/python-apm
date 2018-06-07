@@ -5,5 +5,7 @@ itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
 pep8==1.7.1
+psutil==5.4.5
 pycodestyle==2.4.0
+requests==2.18.4
 Werkzeug==0.14.1
