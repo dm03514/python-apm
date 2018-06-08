@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from mock import MagicMock
 
 from pythonapm.metrics import Metric, METRIC_TYPE
 from pythonapm.surfacers.http import RequestScopedHTTPSurfacer

@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
-class Surfacer(ABC):
+class Surfacer(object):
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def clear(self):
@@ -24,7 +25,7 @@ class Surfacer(ABC):
         pass
 
 
-class Surfacers:
+class Surfacers(object):
     """
     Collection of surfacers, supports a single interface for
     sending metrics to multiple surfacers

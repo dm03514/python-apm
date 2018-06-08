@@ -7,7 +7,8 @@ import sys
 
 from pythonapm.instruments import monkey
 from pythonapm.surfacers.http import RequestScopedHTTPSurfacer
-from pythonapm.surfacers.logging import LogSurfacer
+from pythonapm.surfacers.log import LogSurfacer
+
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -29,9 +30,11 @@ apm = PythonAPM(
     app,
     surfacer_list=(LogSurfacer(), http_surfacer)
 )
+
 monkey.patch_all(apm.surfacers)
 
 
 @app.route('/')
 def hello_world():
-    return 'Hello, World!'
+    hi = str('HIIIIIIIIIIIIIII')
+    return str('{} Hello, World!'.format(hi))
