@@ -4,20 +4,36 @@
 
 Light-weight Python APM to add Custom Runtime Instrumentation  
 
-[Design Docs](https://docs.google.com/document/d/13t3OhHZidfE1O0hkLGldknzEhTNcPK0t3Ecc3PdNGTk/edit?usp=sharing)
-
 
 ## Overview
+
+Python APM aims to provide an easy way to exposes metrics to a variety of web frameworks.  It provides
+a number of primitives that aim to make this fun and simple.  
+
+## Compatibility
+
+Python APM is tested with python 2.7 and multiprocesing.
+
+```
+$ python
+Python 2.7.12 (default, Dec  4 2017, 14:50:18)
+[GCC 5.4.0 20160609] on linux2
+```
+
 
 
 ## Quick Start Test App
 
 - Configure your local python environment
 
+```
+$ pip install -r requirements.txt
+```
+
 - Start the dev server
 
 ```bash
-$ make start-simple-test-server 
+$ make local-test-server-foreground
  * Serving Flask app "tests/contrib/flask/fixtures/single_route_apm_app/app.py"
  * Environment: production
    WARNING: Do not use the development server in a production environment.
@@ -34,7 +50,7 @@ value': 1, 'type': 'counter'}
 - Send a Request
 
 ```bash
-$ make test-simple-test-server
+$ make test-local-test-server
 curl -v http://127.0.0.1:5000/
 *   Trying 127.0.0.1...
 * Connected to 127.0.0.1 (127.0.0.1) port 5000 (#0)
@@ -69,7 +85,9 @@ there was 724 microseconds!
 
 
 ## Flask Integration
-- Wrap APP in flask PythonAPM
+
+Exposing the builtin metrics for the flask framework is trivial, and should only require a single step
+to get going:
 
 ```python
 from pythonapm.contrib.flask import PythonAPM
@@ -77,27 +95,71 @@ from pythonapm.contrib.flask import PythonAPM
 app = Flask(__name__)
 apm = PythonAPM(app)
 ```
-- Please see the tutorials below for examples on how to configure APMs
 
+This enables a couple of different builtin flask scoped metrics:
 
-## Supported Metrics
+- Request Time ([Histogram](https://prometheus.io/docs/concepts/metric_types/#histogram)) - `pythonapm.http.request.time_microseconds`
+- Request / Response RSS diff ([Gauge](https://prometheus.io/docs/concepts/metric_types/#gauge)) - `pythonapm.http.request.rss.diff.byte`
 
-- `__import__` call count (Counter)
+PythonAPM also instruments the python language to expose:
 
+- Number of `str` calls ([Counter](https://prometheus.io/docs/concepts/metric_types/#counter)) - `pythonapm.instruments.allocators.str.count`
+- Number of times a module is imported through `__import__` (Counter) - `pythonapm.instruments.imports.count`
 
-- Flask
-    - Request Time (Histogram)
-    - Imports Per Request (Counter)
+The python langauge metrics are configured through the monkey patching framework.  In order to tie them to 
+the Flask Framework and Request/Response cycle a reference from the flask apm must be passed during initialization.
+
+```python
+app = Flask(__name__)
+
+apm = PythonAPM(
+    app,
+    surfacer_list=(LogSurfacer(),)
+)
+
+monkey.patch_all(apm.surfacers)
+```
+
+The above example initializes the FlaskAPM and then monkey patches the import statement and the builtin `str` object.
 
 
 ## Architecture
 
 ### APM 
-These are integration specific APM, and provide interfaces to configure and scope metrics to certain frameworks.
+These are integration specific APMs (ie Flask, Django, Tornado, etc), and provide interfaces to configure and 
+scope metrics to certain frameworks.  APMs require a collection of surfacers.  The default APM metric output 
+format is through the log surfacer.  By hooking into pythons logging framework it allows the APM client the flexibility
+to configure logging in a familiar way.  By pushing configuration up to the client the client should be able
+to easily expose command line arguments to select different metric output formats (stdout, file, http, ect).
+
+### Metrics
+
+Metrics represent types of measurements.  The currently supported metric types are `Counter`, `Gauge` and `Histogram`.
+APM metrics are built on top of these, ie string allocations are counted and are implemented in terms of a `Counter`. A 
+request time is a distribution and it's implemented in terms of a `Histogram`. 
+
+Each metric requires a name and a collection of `Surfacers`.  This follows the [Observer Design Pattern](https://en.wikipedia.org/wiki/Observer_pattern)
+
+Metrics are emitted to surfacer on every metric call.  This allows metrics to stay slim but still enables surfacers
+to control things like buffering or output formats.  The goal is that adding a new way to expose metrics shouldn't
+have to touch any APM or metric handling code. 
 
 ### Surfacers
 
-### Metrics
+These are responsible for handling metrics emitted by events. The default surfacer is a `LogSurfacer` which will use
+python's logging system to log each metric emitted to it.  The other surfacers available are:
+
+- `RequestScopedHTTPSurfacer` - allows for batching of events and then submission of events over HTTP
+- `InMemorySurfacer` - buffers all events, used for testing
+
+Since metrics are emitted in a stream its up to surfacers to define their lifecycle states.  Currently, surfacers
+require a `clear` method and a `flush` method.  If the surfacer supports buffering they can define it here.
+
+These methods are used to achieve request scoped metrics.  At the beginning of a request `clear` is called and then
+at the end of a request `flush` is called.  This allows for metrics to be aggregated across the lifecycle of a request!
+
+
+Below are a couple of tutorials in hopes of making this clearer!!!
 
 
 ## Creating an HTTP Surfacer Tutorial
@@ -222,7 +284,7 @@ apm = PythonAPM(
 http request that it submits should be failing
 
 ```bash
-$ make start-simple-test-server
+$ make start-local-test-server-foreground
 FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
  * Serving Flask app "tests/contrib/flask/fixtures/single_route_apm_app/app.py"
  * Environment: production
@@ -236,7 +298,7 @@ FLASK_APP=tests/contrib/flask/fixtures/single_route_apm_app/app.py flask run
 ```
 
 ```bash
-$ make test-simple-test-server
+$ make test-local-test-server
 ```
 
 ```bash
@@ -312,9 +374,35 @@ def set_request_rss_diff(self):
 logs!
 
 ```bash
-$ make start-simple-test-server
-$ make test-simple-test-server
+$ make start-local-test-server-foreground
+$ make test-local-test-server
 
 2018-06-05 13:05:54,847 - pythonapm.surfacers.logging - DEBUG - {'value': 0, 'type': 'gauge', 'timestamp': '2018-06-05 13:05:54.847537', 'name': 'pythonapm.http.request.rss.diff.bytes'}
 2018-06-05 13:05:54,848 - pythonapm.surfacers.http - DEBUG - flushing metrics: {"pythonapm.http.request.time_microseconds": [{"value": 1066, "type": "histogram", "timestamp": "2018-06-05 13:05:54.846706", "name": "pythonapm.http.request.time_microseconds"}], "pythonapm.http.request.rss.diff.bytes": [{"value": 0, "type": "gauge", "timestamp": "2018-06-05 13:05:54.847537", "name": "pythonapm.http.request.rss.diff.bytes"}]}
+```
+
+## Development
+
+- Running Tests
+
+```
+$ make test-unit
+```
+
+- Lint project
+
+```
+$ make lint
+```
+
+- Start test server in foreground for local development
+
+```
+$ make start-local-test-server-foreground
+```
+
+- Run server level tests against local server
+
+```
+$ make test-service
 ```

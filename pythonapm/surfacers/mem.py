@@ -1,6 +1,6 @@
 
 
-class InMemorySurfacer:
+class InMemorySurfacer(object):
 
     def __init__(self):
         self.metrics = []

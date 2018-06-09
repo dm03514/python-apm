@@ -2,7 +2,7 @@ from pythonapm.surfacers import Surfacers
 from . import METRIC_TYPE, Metric
 
 
-class Gauge:
+class Gauge(object):
     mtype = METRIC_TYPE.GAUGE
 
     def __init__(self, name, surfacers=Surfacers()):

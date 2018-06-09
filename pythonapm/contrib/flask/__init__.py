@@ -10,12 +10,12 @@ from flask import signals
 from pythonapm.metrics.gauge import Gauge
 from pythonapm.metrics.histogram import Histogram
 from pythonapm.surfacers import Surfacers
-from pythonapm.surfacers.logging import LogSurfacer
+from pythonapm.surfacers.log import LogSurfacer
 
 logger = logging.getLogger(__name__)
 
 
-class PythonAPM:
+class PythonAPM(object):
     """
     Instruments flask applications, exposes a number of configurable metrics.
     """

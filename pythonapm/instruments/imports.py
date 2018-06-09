@@ -1,7 +1,7 @@
 from pythonapm.metrics.counter import Counter
 
 
-class Imports:
+class Imports(object):
 
     def __init__(self, wraps, surfacers):
         self.wraps = wraps

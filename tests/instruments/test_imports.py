@@ -2,7 +2,7 @@ import unittest
 
 from pythonapm.instruments import monkey
 from pythonapm.surfacers import Surfacers
-from pythonapm.surfacers.logging import LogSurfacer
+from pythonapm.surfacers.log import LogSurfacer
 from pythonapm.surfacers.mem import InMemorySurfacer
 
 

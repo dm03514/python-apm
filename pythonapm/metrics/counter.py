@@ -2,7 +2,7 @@ from pythonapm.metrics import Metric, METRIC_TYPE
 from pythonapm.surfacers import Surfacers
 
 
-class Counter:
+class Counter(object):
     mtype = METRIC_TYPE.COUNTER
 
     def __init__(self, name, surfacers=Surfacers()):
