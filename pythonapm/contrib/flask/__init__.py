@@ -15,7 +15,7 @@ from pythonapm.surfacers.log import LogSurfacer
 logger = logging.getLogger(__name__)
 
 
-class PythonAPM:
+class PythonAPM(object):
     """
     Instruments flask applications, exposes a number of configurable metrics.
     """

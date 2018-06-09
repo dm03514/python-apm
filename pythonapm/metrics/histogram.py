@@ -2,7 +2,7 @@ from pythonapm.metrics import METRIC_TYPE, Metric
 from pythonapm.surfacers import Surfacers
 
 
-class Histogram:
+class Histogram(object):
     mtype = METRIC_TYPE.HISTOGRAM
 
     def __init__(self, name, surfacers=Surfacers()):
