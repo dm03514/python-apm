@@ -401,8 +401,22 @@ $ make lint
 $ make start-local-test-server-foreground
 ```
 
-- Run server level tests against local server
+- Run service level tests against local server
 
 ```
 $ make test-service
 ```
+
+## Service Tests
+
+Service tests are written in go and located in https://github.com/dm03514/python-apm-service-tests.
+
+Currently there is a single test of the http surfacer.  Testing the surfacer requires:
+
+- Setting up an HTTP server to handle the metric surfacing
+- Making a request to the flask app
+- Waiting (with timeout) for the HTTP metric request
+- Making assertions on the metrics submitted
+
+Because of the concurrent nature of this, go was chosen.  Starting and stopping http
+servers, timeouts, and concurrency required of the test were trivial in go.  
