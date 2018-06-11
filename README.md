@@ -76,12 +76,12 @@ Hello, World!
 ```bash
 2018-06-04 13:00:48,920 - pythonapm.contrib.flask - DEBUG - request_started
 2018-06-04 13:00:48,920 - pythonapm.contrib.flask - DEBUG - request_finished
-2018-06-04 13:00:48,921 - pythonapm.surfacers.logging - DEBUG - {'timestamp': datetime.datetime(2018, 6, 4, 13, 0, 48, 921243), 'value': 724, 'name': 'pythonapm.http.request.time_ms', 'type': 'histogram'}
+2018-06-04 13:00:48,921 - pythonapm.surfacers.logging - DEBUG - {'timestamp': datetime.datetime(2018, 6, 4, 13, 0, 48, 921243), 'value': 724, 'name': 'pythonapm.http.request.time_microseconds', 'type': 'histogram'}
 2018-06-04 13:00:48,921 - werkzeug - INFO - 127.0.0.1 - - [04/Jun/2018 13:00:48] "GET / HTTP/1.1" 200 -
 ```
 
 By default the Flask APM exposes metrics through a logging surfacer.  The above logs show that
-there was 724 microseconds!
+the request took 724 microseconds!
 
 
 ## Flask Integration
