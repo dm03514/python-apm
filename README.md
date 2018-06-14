@@ -107,17 +107,19 @@ PythonAPM also instruments the python language to expose:
 - Number of times a module is imported through `__import__` (Counter) - `pythonapm.instruments.imports.count`
 
 The python langauge metrics are configured through the monkey patching framework.  In order to tie them to 
-the Flask Framework and Request/Response cycle a reference from the flask apm must be passed during initialization.
+the Flask Framework and Request/Response cycle a reference to the flask apm surfacers must be passed during initialization.
 
 ```python
+
 app = Flask(__name__)
 
+surfacers = Surfacers((LogSurfacer(),))
 apm = PythonAPM(
     app,
-    surfacer_list=(LogSurfacer(),)
+    surfacers=surfacers)
 )
 
-monkey.patch_all(apm.surfacers)
+monkey.patch_all(surfacers)
 ```
 
 The above example initializes the FlaskAPM and then monkey patches the import statement and the builtin `str` object.
@@ -271,12 +273,22 @@ http_surfacer = RequestScopedHTTPSurfacer(
 )
 ```
 
-- Configure the Flask APM with the http_surfacer
+- Configure the surfacers collection to emit metrics to the new HTTP surfacer
 
+```python
+surfacers = Surfacers((
+    LogSurfacer(),
+    RequestScopedHTTPSurfacer(
+        http_port=':9000',
+    ))
+)
+```
+
+- Instantiate the Python APM with the surfacers collection
 ```python
 apm = PythonAPM(
     app,
-    surfacer_list=(LogSurfacer(), http_surfacer)
+    surfacers=surfacers,
 )
 ```
 

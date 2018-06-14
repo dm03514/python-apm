@@ -19,10 +19,10 @@ class PythonAPM(object):
     """
     Instruments flask applications, exposes a number of configurable metrics.
     """
-    def __init__(self, app, surfacer_list=(LogSurfacer(),)):
+    def __init__(self, app, surfacers=Surfacers(LogSurfacer(),)):
         self.app = app
 
-        self.surfacers = Surfacers(surfacer_list)
+        self.surfacers = surfacers
 
         self.request_time = Histogram(
             'pythonapm.http.request.time_microseconds',
