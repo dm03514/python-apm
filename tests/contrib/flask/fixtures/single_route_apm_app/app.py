@@ -6,6 +6,7 @@ import logging
 import sys
 
 from pythonapm.instruments import monkey
+from pythonapm.surfacers import Surfacers
 from pythonapm.surfacers.http import RequestScopedHTTPSurfacer
 from pythonapm.surfacers.log import LogSurfacer
 
@@ -20,18 +21,22 @@ formatter = logging.Formatter(
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
-http_surfacer = RequestScopedHTTPSurfacer(
-    http_port=':9000',
+
+surfacers = Surfacers((
+    LogSurfacer(),
+    RequestScopedHTTPSurfacer(
+        http_port=':9000',
+    ))
 )
 
 app = Flask(__name__)
 
 apm = PythonAPM(
     app,
-    surfacer_list=(LogSurfacer(), http_surfacer)
+    surfacers=surfacers,
 )
 
-monkey.patch_all(apm.surfacers)
+monkey.patch_all(surfacers)
 
 
 @app.route('/')
